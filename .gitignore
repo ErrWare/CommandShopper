@@ -1,0 +1,6 @@
+*.json
+!sprouts_cats.json
+!sprouts_items.json
+sproutslist.py
+assets*
+__pycache__/

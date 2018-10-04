@@ -1,0 +1,4 @@
+helps formatting headers when copying from browser console
+
+^([A-Za-z\-]+): (.*?)$
+'$1':'$2',
