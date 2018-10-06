@@ -1,6 +1,9 @@
 import requests, json, re
 from collections import namedtuple
 
+# standard item info scraped
+# if info unavailable -> null in json, or not present
+# -> save as None in tuple
 Item = namedtuple('Item',
                   [
                       'name',
@@ -8,23 +11,41 @@ Item = namedtuple('Item',
                       'base_price',
                       'base_quantity',
                       'uom',
-                      'categories',
                       'sale_price',
                       'sale_text',
-                      'sale_end'
+                      'sale_end',
+                      'categories'
                   ])
-
+# field names in received json corresponding to fields in Items
 translator = Item(
                   'name',
                   'id',
                   'base_price',
                   'base_quantity',
-                  'categories',
                   'display_uom',
                   'sale_price',
                   'promo_tag',
-                  'sale_end_date'
+                  'sale_end_date',
+                  'categories'
                  )
+
+Category = namedtuple('Category',['ID','name'])
+c_translate = Category(
+                        'id',
+                        'name'
+                       )
+# Scrape [(catID, catName)] from json item
+def get_cat_array(json_item):
+    return [Category(cat[c_translate.ID],cat[c_translate.name]) \
+            for cat in json_item[translator.categories]]
+
+def get_item_name(json_item):
+    name = json_item[translator.name]
+    name = re.sub(r',\s1\sEA.*','',name).strip()
+    return name
+
+
+
 # set item limit higher when scraping
 with open('sprouts_url.json','r') as url_file:
     url = json.load(url_file)
@@ -34,7 +55,7 @@ with open('sprouts_headers.json','r') as headers_file:
 # Scrape items
 catsDict = {}
 itemDict = {}
-for i in range(322):
+for i in range(322):    # 322 magic (empirical max index cat)
     res = requests.get(url.format(i),headers=headers)
     try:
         res.raise_for_status()
@@ -45,19 +66,28 @@ for i in range(322):
     print('id {} count: {}'.format(i,len(res['items'])))
     for item in res['items']:
         # Scrape Items
+        item_name = get_item_name(item)
+        cat_array = get_cat_array(item)
+        item_categories = [cat.ID for cat in cat_array]
+        all_other_atts = [item[field] for field in translator[1:-1]]
+        item_tuple = Item(item_name,*all_other_atts, item_categories)
+
+        itemDict[item_tuple.ID] = item_tuple
+        for cat in cat_array:
+            catsDict[cat.ID] = cat
+        '''
         keep_atts_item = ['name','base_price','base_quantity','display_uom','id']    #uom = unit of measurement
         itemDict[item['id']] = { 'categories':[c['id'] for c in item['categories']]}
-        item['name'] = re.sub(',\s1\sEA.*','',item['name']).strip()
         for att in keep_atts_item:
             itemDict[item['id']][att] = item[att]
         # Scrape categories
         for cat in item['categories']:
             catsDict[cat['id']] = cat['name']
+        '''
 
-
-with open('sprouts_items.json','w') as file:
+with open('sprouts_items2.json','w') as file:
     file.write(json.dumps(itemDict))
 
-with open('sprouts_cats.json','w') as file:
+with open('sprouts_cats2.json','w') as file:
     file.write(json.dumps(catsDict))
 
