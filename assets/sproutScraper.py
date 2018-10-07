@@ -1,21 +1,6 @@
 import requests, json, re
-from collections import namedtuple
+from shoplib import Item, Category
 
-# standard item info scraped
-# if info unavailable -> null in json, or not present
-# -> save as None in tuple
-Item = namedtuple('Item',
-                  [
-                      'name',
-                      'ID',
-                      'base_price',
-                      'base_quantity',
-                      'uom',
-                      'sale_price',
-                      'sale_text',
-                      'sale_end',
-                      'categories'
-                  ])
 # field names in received json corresponding to fields in Items
 translator = Item(
                   'name',
@@ -29,7 +14,6 @@ translator = Item(
                   'categories'
                  )
 
-Category = namedtuple('Category',['ID','name'])
 c_translate = Category(
                         'id',
                         'name'
@@ -45,8 +29,6 @@ def get_item_name(json_item):
     return name
 
 
-
-# set item limit higher when scraping
 with open('sprouts_url.json','r') as url_file:
     url = json.load(url_file)
 with open('sprouts_headers.json','r') as headers_file:
@@ -65,29 +47,21 @@ for i in range(322):    # 322 magic (empirical max index cat)
     res = json.loads(res.text)
     print('id {} count: {}'.format(i,len(res['items'])))
     for item in res['items']:
-        # Scrape Items
+        # Gather Info from json formatted item
         item_name = get_item_name(item)
         cat_array = get_cat_array(item)
         item_categories = [cat.ID for cat in cat_array]
-        all_other_atts = [item[field] for field in translator[1:-1]]
+        all_other_atts = [item.get(field, None) for field in translator[1:-1]]
         item_tuple = Item(item_name,*all_other_atts, item_categories)
-
+        # Save to dicts
         itemDict[item_tuple.ID] = item_tuple
         for cat in cat_array:
             catsDict[cat.ID] = cat
-        '''
-        keep_atts_item = ['name','base_price','base_quantity','display_uom','id']    #uom = unit of measurement
-        itemDict[item['id']] = { 'categories':[c['id'] for c in item['categories']]}
-        for att in keep_atts_item:
-            itemDict[item['id']][att] = item[att]
-        # Scrape categories
-        for cat in item['categories']:
-            catsDict[cat['id']] = cat['name']
-        '''
 
-with open('sprouts_items2.json','w') as file:
+# Save dicts to files
+with open('sprouts_items.json','w') as file:
     file.write(json.dumps(itemDict))
 
-with open('sprouts_cats2.json','w') as file:
+with open('sprouts_cats.json','w') as file:
     file.write(json.dumps(catsDict))
 
