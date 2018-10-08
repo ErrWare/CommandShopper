@@ -63,7 +63,7 @@ class Shop(object):
 
     @property
     def items(self):
-        return list(self.__dict__.get('_filtered_items', self._items).values())
+        return list(self.__dict__.get('_filtered_items', self._items.values()))
 
     @property
     def categories(self):
@@ -71,7 +71,7 @@ class Shop(object):
 
     def filter_items(self,filters=None, _cache={'filters':None}):
         if filters != _cache['filters']:
-            self._filtered_items = [item for item in self._items if 
+            self._filtered_items = [item for item in self._items.values() if 
                                   any(Shop.item_matches(item,f) for f in filters)]
             _cache['filters'] = filters
 
@@ -93,4 +93,4 @@ class Shop(object):
         elif filter_.isdigit():
             return filter_ in item.categories or filter_ == item.ID
         else:
-           return re.search(filter_, item['name']) is not None
+           return re.search(filter_, item.name) is not None
