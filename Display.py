@@ -1,6 +1,8 @@
 from assets.DictClusterer import DictClusterer
 from assets.shoplib import Item, Category
+from itertools import zip_longest
 import logging
+import textwrap
 logging.basicConfig(level=logging.DEBUG)
 
 
@@ -44,45 +46,49 @@ class Display:
                   (5+max_width-width) + '{:>3}'.format(cat.ID))
 
     def displayItems(self, fields=['name', 'ID']):
+        if 'name' not in fields:
+            fields.insert(0, 'name')
+        elif fields.index('name') != 0:
+            fields.remove('name')
+            fields.insert(0, 'name')
         col_widths = [len(str(field)) for field in fields]
         items = self.shop.items
+        # Only print first 20 items for testing
         items = items[:20]
         for item in items:
             for index, field in enumerate(fields):
                 col_widths[index] = max(
                     col_widths[index], len(str(getattr(item, field))))
+
+        max_col_size = 25
+        for index, field in enumerate(fields):
+                col_widths[index] = min(
+                    col_widths[index], max_col_size)
         # Print Header
-        formatted_col_names = [('{:^'+str(width)+'}').format(getattr(Display.i_columns,field))
+        col_padding = 4
+        formatted_col_names = [('{:^'+str(width-1+col_padding)+'}|').format(getattr(Display.i_columns,field))
                                for field, width in zip(fields, col_widths)]
-        header = (4*' ').join(formatted_col_names)
+        header = ''.join(formatted_col_names)
         print(header)
 
         # Print Items
+        padded_width = list(width + col_padding for width in col_widths)
+        unf_item_line = '{{{{0:{{0}}<{}}}}}'.format(padded_width[0])
+        unf_item_line += ''.join('{{{{{}:{{0}}^{}}}}}'.format(index,width) for index,width in enumerate(padded_width[1:-1],start=1))
+        unf_item_line += '{{{{{}:{{0}}>{}}}}}'.format(len(col_widths)-1,padded_width[-1])
+
         for item in items:
-            for field, width in zip(fields, col_widths):
-                field_val = str(getattr(item, field))
-                print(field_val, (width-len(field_val))*'.', end=4*'.')
-            print()
-
-    '''
-
-    '''
-    # DATA EXPLORATION
-
-    '''
-    def display_shopping_info(self):
-        logging.debug('displaying shopping info')
-        logging.debug(self.shopping_list)
-        clusterer = DictClusterer(
-                                 cluster_field='categories',
-                                 dic=
-                                 {ID : item for ID, item in self._items.items()
-                                 if ID in self.shopping_list}
-                                 )
-        self.display_items(self.get_items(filters=self.shopping_list),
-                            fields=[self.item_field.name,
-                                    self.item_field.base_price,
-                                    self.item_field.base_quantity,
-                                    self.item_field.base_unit])
-
-'''
+            #calc entry rows of each col
+            col_entries = list(str(getattr(item, field)) for field in fields)
+            entry_rows = list(textwrap.wrap(entry,width,subsequent_indent=' ')\
+                            for entry, width in zip(col_entries, col_widths)  )
+            first_row = True
+            for row_entries in zip_longest(*entry_rows, fillvalue=''):
+                #for the first row use a '.' filler
+                if first_row:
+                    row_string = unf_item_line.format('.').format(*row_entries)
+                    first_row = False
+                #for the rest use a ' ' filler
+                else:
+                    row_string = unf_item_line.format(' ').format(*row_entries)
+                print(row_string)

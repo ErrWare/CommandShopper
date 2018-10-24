@@ -33,12 +33,14 @@ with open('sprouts_url.json','r') as url_file:
     url = json.load(url_file)
 with open('sprouts_headers.json','r') as headers_file:
     headers = json.load(headers_file)
+with open('sprouts_cookies.json','r') as cookies_file:
+    cookies = json.load(cookies_file)
 
 # Scrape items
 catsDict = {}
 itemDict = {}
 for i in range(322):    # 322 magic (empirical max index cat)
-    res = requests.get(url.format(i),headers=headers)
+    res = requests.get(url.format(i),headers=headers,cookies=cookies)
     try:
         res.raise_for_status()
     except:

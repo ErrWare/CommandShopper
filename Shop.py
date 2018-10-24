@@ -17,6 +17,7 @@ class Shop(object):
     ITEM_FILE = '_items.json'
     SHOP_FILE = '_shopping_list.json'
     HEADER_FILE = '_headers.json'
+    COOKIE_FILE = '_cookies.json'
     URL_FILE = '_url.json'  # unformatted category url
     Item = namedtuple('Item_Fields', ['name', 'id',
                                       'base_price', 'base_quantity',
