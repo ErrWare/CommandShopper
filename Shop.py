@@ -27,7 +27,7 @@ class Shop(object):
 
     # item_fields as tuple of (name, base price, base unit, display uom, ..?)
     def __init__(self, name):
-
+        self._filtered_items = []
         self.name = name.lower()
         try:
             with open(os.path.join(Shop.ASSETS_DIR, self.name + Shop.CATS_FILE), 'r') as cat_file:
@@ -66,9 +66,16 @@ class Shop(object):
     def categories(self):
         return list(self._categories.values())
 
-    def filter_items(self, filters=None, _cache={'filters': None}):
+    def filter_items(self, filters=None, *, refine=False, _cache={'filters': None}):
+        '''
+        Set items of interest in shop memory
+        '''
+        if refine:
+            unrefined_items = self._filtered_items
+        else:
+            unrefined_items = self._items.values()
         if filters != _cache['filters']:
-            self._filtered_items = [item for item in self._items.values() if
+            self._filtered_items = [item for item in unrefined_items if
                                     any(Shop.item_matches(item, f) for f in filters)]
             _cache['filters'] = filters
 
@@ -76,14 +83,22 @@ class Shop(object):
     PROCESSING
 
     '''
+    # Marked for deletion
     @staticmethod
     def filter_dic(dic, filters):
+        '''
+        Return a list of (key, value) pairs that match
+        any of the filters given.
+        '''
         return [(key, value) for key, value in dic.items()
                 for f in filters
                 if Shop.item_matches(value, f)]
 
     @staticmethod
     def item_matches(item, filter_):
+        '''
+        Return True if item matches filter_
+        '''
         if filter_ is None:
             return True
         elif filter_.isdigit():

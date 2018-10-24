@@ -66,17 +66,18 @@ class Display:
                     col_widths[index], max_col_size)
         # Print Header
         col_padding = 4
-        formatted_col_names = [('{:^'+str(width-1+col_padding)+'}|').format(getattr(Display.i_columns,field))
-                               for field, width in zip(fields, col_widths)]
+        padded_width = list(width + col_padding for width in col_widths)
+
+        formatted_col_names = [('{:^'+str(width-1)+'}|').format(getattr(Display.i_columns,field))
+                               for field, width in zip(fields, padded_width)]
         header = ''.join(formatted_col_names)
         print(header)
 
-        # Print Items
-        padded_width = list(width + col_padding for width in col_widths)
         unf_item_line = '{{{{0:{{0}}<{}}}}}'.format(padded_width[0])
         unf_item_line += ''.join('{{{{{}:{{0}}^{}}}}}'.format(index,width) for index,width in enumerate(padded_width[1:-1],start=1))
         unf_item_line += '{{{{{}:{{0}}>{}}}}}'.format(len(col_widths)-1,padded_width[-1])
 
+        # Print Items
         for item in items:
             #calc entry rows of each col
             col_entries = list(str(getattr(item, field)) for field in fields)
