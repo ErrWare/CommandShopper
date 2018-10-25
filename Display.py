@@ -51,7 +51,8 @@ class Display:
         elif fields.index('name') != 0:
             fields.remove('name')
             fields.insert(0, 'name')
-        col_widths = [len(str(field)) for field in fields]
+        headers = [getattr(Display.i_columns, field) for field in fields]
+        col_widths = [len(header) for header in headers]
         items = self.shop.items
         # Only print first 20 items for testing
         items = items[:20]
@@ -67,7 +68,8 @@ class Display:
         # Print Header
         col_padding = 4
         padded_width = list(width + col_padding for width in col_widths)
-
+        for i, header in enumerate(headers):
+            padded_width[i] += (padded_width[i] - 1 - len(header)) % 2
         formatted_col_names = [('{:^'+str(width-1)+'}|').format(getattr(Display.i_columns,field))
                                for field, width in zip(fields, padded_width)]
         header = ''.join(formatted_col_names)
